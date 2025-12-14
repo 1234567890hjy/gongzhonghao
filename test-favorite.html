@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试收藏夹功能</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+        }
+        button {
+            padding: 8px 16px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: #f5f5f5;
+            border-radius: 4px;
+        }
+        .favorite-btn {
+            margin-left: auto;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .favorite-btn.active {
+            color: gold;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            margin: 50px auto;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 500px;
+        }
+        #favoriteList {
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>测试收藏夹功能</h1>
+    
+    <div class="test-section">
+        <h2>1. 测试文件列表</h2>
+        <div id="fileList">
+            <!-- 文件列表将动态生成 -->
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. 测试收藏夹窗口</h2>
+        <button onclick="openFavoriteWindow()">打开收藏夹</button>
+        <div id="favoriteWindow" class="modal">
+            <div class="modal-content">
+                <h3>收藏夹</h3>
+                <div id="favoriteList">
+                    <!-- 收藏的文件将显示在这里 -->
+                </div>
+                <button onclick="closeFavoriteWindow()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 简单的文件管理器测试
+        class TestFileManager {
+            constructor() {
+                this.files = [
+                    {id: '1', name: 'document1.pdf', type: 'pdf', favorite: false},
+                    {id: '2', name: 'image1.jpg', type: 'image', favorite: false},
+                    {id: '3', name: 'page1.html', type: 'html', favorite: false}
+                ];
+                this.renderFileList();
+            }
+            
+            renderFileList() {
+                const container = document.getElementById('fileList');
+                container.innerHTML = '';
+                
+                this.files.forEach(file => {
+                    const div = document.createElement('div');
+                    div.className = 'file-item';
+                    div.innerHTML = `
+                        <span>${file.name}</span>
+                        <button class="favorite-btn ${file.favorite ? 'active' : ''}" 
+                                onclick="testManager.toggleFavorite('${file.id}')">★</button>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+            
+            toggleFavorite(fileId) {
+                const file = this.files.find(f => f.id === fileId);
+                if (file) {
+                    file.favorite = !file.favorite;
+                    this.renderFileList();
+                    renderFavoriteList();
+                }
+            }
+        }
+        
+        function renderFavoriteList() {
+            const container = document.getElementById('favoriteList');
+            const favoriteFiles = testManager.files.filter(f => f.favorite);
+            
+            if (favoriteFiles.length === 0) {
+                container.innerHTML = '<p>暂无收藏的文件</p>';
+                return;
+            }
+            
+            container.innerHTML = '';
+            favoriteFiles.forEach(file => {
+                const div = document.createElement('div');
+                div.className = 'file-item';
+                div.textContent = file.name;
+                container.appendChild(div);
+            });
+        }
+        
+        function openFavoriteWindow() {
+            const modal = document.getElementById('favoriteWindow');
+            renderFavoriteList();
+            modal.style.display = 'block';
+        }
+        
+        function closeFavoriteWindow() {
+            const modal = document.getElementById('favoriteWindow');
+            modal.style.display = 'none';
+        }
+        
+        // 初始化测试管理器
+        const testManager = new TestFileManager();
+    </script>
+</body>
+</html>

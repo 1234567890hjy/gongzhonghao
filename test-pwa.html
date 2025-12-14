@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        button {
+            padding: 10px 20px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>PWA功能测试</h1>
+    
+    <div class="test-section">
+        <h2>1. Service Worker 状态</h2>
+        <div id="sw-status" class="info">检查中...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Manifest 配置</h2>
+        <div id="manifest-status" class="info">检查中...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. 离线功能</h2>
+        <button onclick="testOffline()">测试离线访问</button>
+        <div id="offline-status" class="info">未测试</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. PWA 安装提示</h2>
+        <div id="install-status" class="info">检查中...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>5. 应用信息</h2>
+        <div id="app-info">
+            <p>应用名称: 文件管理App</p>
+            <p>版本: 1.0.0</p>
+            <p>作者: 开发团队</p>
+        </div>
+    </div>
+
+    <script>
+        // 检查Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.ready
+                .then(registration => {
+                    document.getElementById('sw-status').innerHTML = '<span class="success">✅ Service Worker 已注册成功</span>';
+                    document.getElementById('sw-status').innerHTML += '<br>作用域: ' + registration.scope;
+                })
+                .catch(error => {
+                    document.getElementById('sw-status').innerHTML = '<span class="error">❌ Service Worker 注册失败</span>';
+                    document.getElementById('sw-status').innerHTML += '<br>错误: ' + error.message;
+                });
+        } else {
+            document.getElementById('sw-status').innerHTML = '<span class="error">❌ 浏览器不支持 Service Worker</span>';
+        }
+        
+        // 检查Manifest
+        fetch('/manifest.json')
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Manifest 加载失败');
+            })
+            .then(manifest => {
+                document.getElementById('manifest-status').innerHTML = '<span class="success">✅ Manifest 配置正常</span>';
+                document.getElementById('manifest-status').innerHTML += '<br>应用名称: ' + manifest.name;
+                document.getElementById('manifest-status').innerHTML += '<br>显示模式: ' + manifest.display;
+            })
+            .catch(error => {
+                document.getElementById('manifest-status').innerHTML = '<span class="error">❌ Manifest 配置异常</span>';
+                document.getElementById('manifest-status').innerHTML += '<br>错误: ' + error.message;
+            });
+        
+        // 测试离线功能
+        function testOffline() {
+            document.getElementById('offline-status').innerHTML = '<span class="info">正在测试...</span>';
+            
+            // 缓存关键资源
+            caches.open('test-cache')
+                .then(cache => {
+                    return cache.addAll(['/index.html', '/style.css', '/script.js']);
+                })
+                .then(() => {
+                    document.getElementById('offline-status').innerHTML = '<span class="success">✅ 资源缓存成功，支持离线访问</span>';
+                })
+                .catch(error => {
+                    document.getElementById('offline-status').innerHTML = '<span class="error">❌ 资源缓存失败</span>';
+                    document.getElementById('offline-status').innerHTML += '<br>错误: ' + error.message;
+                });
+        }
+        
+        // 检查PWA安装提示
+        let deferredPrompt;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('install-status').innerHTML = '<span class="success">✅ PWA 可以安装到主屏幕</span>';
+        });
+        
+        setTimeout(() => {
+            if (!deferredPrompt) {
+                document.getElementById('install-status').innerHTML = '<span class="info">ℹ️ 请使用Chrome/Safari访问以获得安装提示</span>';
+            }
+        }, 3000);
+    </script>
+</body>
+</html>

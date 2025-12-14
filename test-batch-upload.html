@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>批量上传测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-container {
+            background-color: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .btn {
+            padding: 10px 20px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .btn:hover {
+            background-color: #1976D2;
+        }
+        .test-info {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: white;
+            border-radius: 4px;
+        }
+        .test-result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        #testProgress {
+            width: 100%;
+            height: 20px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        #testProgressFill {
+            height: 100%;
+            background-color: #4CAF50;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <h1>批量上传测试</h1>
+    <p>此页面用于测试文件管理应用的批量上传功能，可模拟上传700个文件。</p>
+    
+    <div class="test-container">
+        <h2>测试设置</h2>
+        <div class="test-info">
+            <label for="fileCount">文件数量:</label>
+            <input type="number" id="fileCount" value="700" min="1" max="1000">
+        </div>
+        <div class="test-info">
+            <label for="fileSize">平均文件大小 (KB):</label>
+            <input type="number" id="fileSize" value="10" min="1" max="1000">
+        </div>
+        <button class="btn" onclick="startTest()">开始测试</button>
+        <button class="btn" onclick="clearTest()" style="margin-left: 10px; background-color: #f44336;">清除测试数据</button>
+    </div>
+    
+    <div id="testProgress">
+        <div id="testProgressFill"></div>
+    </div>
+    
+    <div id="testResult" class="test-result"></div>
+    
+    <script>
+        function startTest() {
+            const fileCount = parseInt(document.getElementById('fileCount').value);
+            const fileSize = parseInt(document.getElementById('fileSize').value);
+            
+            const startTime = Date.now();
+            let processedCount = 0;
+            const testResult = document.getElementById('testResult');
+            const testProgressFill = document.getElementById('testProgressFill');
+            
+            testResult.innerHTML = '<h3>测试进行中...</h3>';
+            testResult.className = 'test-result';
+            
+            // 创建模拟文件数据
+            console.log(`开始创建 ${fileCount} 个模拟文件...`);
+            
+            // 先检查是否已加载FileManager
+            if (typeof window.fileManager === 'undefined') {
+                testResult.innerHTML = '<h3>错误</h3><p>FileManager未加载，请先打开主应用页面。</p>';
+                testResult.className = 'test-result error';
+                return;
+            }
+            
+            // 创建Blob文件
+            const files = [];
+            for (let i = 0; i < fileCount; i++) {
+                const content = `这是测试文件 ${i+1} 的内容。\n\n文件大小约为 ${fileSize} KB。\n\n测试批量上传功能。`;
+                const blob = new Blob([content.repeat(Math.ceil(fileSize * 1024 / content.length))], { type: 'text/plain' });
+                blob.name = `test-file-${i+1}.txt`;
+                blob.lastModified = Date.now();
+                blob.lastModifiedDate = new Date();
+                files.push(blob);
+            }
+            
+            console.log(`模拟文件创建完成，共 ${files.length} 个文件`);
+            
+            // 创建FileList
+            const dataTransfer = new DataTransfer();
+            files.forEach(file => {
+                dataTransfer.items.add(file);
+            });
+            const fileList = dataTransfer.files;
+            
+            console.log(`FileList 创建完成，共 ${fileList.length} 个文件`);
+            
+            // 调用handleFileUpload方法
+            console.log('开始批量上传...');
+            
+            // 监听上传进度
+            const originalUpdateProgress = fileManager.updateUploadProgress;
+            fileManager.updateUploadProgress = function(uploadedCount, totalFiles) {
+                originalUpdateProgress.call(this, uploadedCount, totalFiles);
+                const percentage = Math.round((uploadedCount / totalFiles) * 100);
+                testProgressFill.style.width = percentage + '%';
+            };
+            
+            // 修改finishBatchUpload方法以获取测试结果
+            const originalFinishBatchUpload = fileManager.finishBatchUpload;
+            fileManager.finishBatchUpload = function(uploadedFiles, failedFiles, totalFiles) {
+                const endTime = Date.now();
+                const duration = (endTime - startTime) / 1000;
+                const speed = Math.round(totalFiles / duration);
+                
+                let resultHTML = '<h3>测试完成</h3>';
+                resultHTML += `<p>总文件数: ${totalFiles}</p>`;
+                resultHTML += `<p>成功上传: ${uploadedFiles.length}</p>`;
+                resultHTML += `<p>上传失败: ${failedFiles.length}</p>`;
+                resultHTML += `<p>耗时: ${duration.toFixed(2)} 秒</p>`;
+                resultHTML += `<p>上传速度: ${speed} 文件/秒</p>`;
+                
+                if (failedFiles.length === 0) {
+                    resultHTML += '<p class="success">✅ 所有文件上传成功！</p>';
+                    testResult.className = 'test-result success';
+                } else {
+                    resultHTML += `<p class="error">⚠️ 部分文件上传失败</p>`;
+                    testResult.className = 'test-result error';
+                }
+                
+                testResult.innerHTML = resultHTML;
+                
+                // 恢复原始方法
+                fileManager.updateUploadProgress = originalUpdateProgress;
+                fileManager.finishBatchUpload = originalFinishBatchUpload;
+                
+                // 调用原始方法完成上传
+                originalFinishBatchUpload.call(this, uploadedFiles, failedFiles, totalFiles);
+            };
+            
+            // 触发文件上传
+            fileManager.handleFileUpload({ target: { files: fileList } });
+        }
+        
+        function clearTest() {
+            if (typeof window.fileManager !== 'undefined') {
+                // 清除所有测试文件
+                const testFiles = fileManager.files.filter(file => file.name.startsWith('test-file-'));
+                if (testFiles.length > 0) {
+                    testFiles.forEach(file => {
+                        fileManager.deleteFile(file.id);
+                    });
+                    alert(`已清除 ${testFiles.length} 个测试文件`);
+                } else {
+                    alert('没有找到测试文件');
+                }
+            } else {
+                alert('FileManager未加载，请先打开主应用页面。');
+            }
+        }
+    </script>
+</body>
+</html>

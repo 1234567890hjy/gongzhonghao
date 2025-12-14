@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简单文件管理器测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .file-item {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .file-actions {
+            margin-top: 10px;
+        }
+        .btn {
+            padding: 5px 10px;
+            margin: 0 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>简单文件管理器测试</h1>
+    
+    <div>
+        <button id="uploadBtn" class="btn">上传文件</button>
+        <input type="file" id="fileInput" multiple style="display: none;">
+    </div>
+    
+    <h2>文件列表</h2>
+    <div id="fileList"></div>
+    
+    <script>
+        class SimpleFileManager {
+            constructor() {
+                this.files = [];
+                this.init();
+            }
+            
+            init() {
+                this.bindEvents();
+                this.renderFileList();
+            }
+            
+            bindEvents() {
+                const uploadBtn = document.getElementById('uploadBtn');
+                const fileInput = document.getElementById('fileInput');
+                
+                uploadBtn.addEventListener('click', () => {
+                    fileInput.click();
+                });
+                
+                fileInput.addEventListener('change', (e) => {
+                    this.handleFileUpload(e);
+                });
+            }
+            
+            handleFileUpload(event) {
+                const fileList = event.target.files;
+                if (fileList.length === 0) return;
+                
+                for (let i = 0; i < fileList.length; i++) {
+                    const file = fileList[i];
+                    this.uploadFile(file);
+                }
+                
+                // 清空文件输入
+                event.target.value = '';
+            }
+            
+            uploadFile(file) {
+                const fileId = Date.now() + Math.random().toString(36).substr(2, 9);
+                
+                const fileData = {
+                    id: fileId,
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    uploadedAt: new Date().toISOString(),
+                    content: URL.createObjectURL(file)
+                };
+                
+                this.files.push(fileData);
+                this.renderFileList();
+            }
+            
+            renderFileList() {
+                const fileListElement = document.getElementById('fileList');
+                
+                if (this.files.length === 0) {
+                    fileListElement.innerHTML = '<div>暂无文件</div>';
+                    return;
+                }
+                
+                let html = '';
+                this.files.forEach(file => {
+                    html += '<div class="file-item">';
+                    html += '<div>文件名: ' + file.name + '</div>';
+                    html += '<div>类型: ' + file.type + '</div>';
+                    html += '<div>大小: ' + this.formatFileSize(file.size) + '</div>';
+                    html += '<div>上传时间: ' + this.formatDate(file.uploadedAt) + '</div>';
+                    html += '<div class="file-actions">';
+                    html += '<button class="btn" onclick="fileManager.viewFile(\'' + file.id + '\')">查看</button>';
+                    html += '<button class="btn" onclick="fileManager.deleteFile(\'' + file.id + '\')">删除</button>';
+                    html += '</div>';
+                    html += '</div>';
+                });
+                
+                fileListElement.innerHTML = html;
+            }
+            
+            viewFile(fileId) {
+                const file = this.files.find(f => f.id === fileId);
+                if (!file) return;
+                
+                window.open(file.content, '_blank');
+            }
+            
+            deleteFile(fileId) {
+                this.files = this.files.filter(file => file.id !== fileId);
+                this.renderFileList();
+            }
+            
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+            
+            formatDate(dateString) {
+                const date = new Date(dateString);
+                return date.toLocaleString('zh-CN');
+            }
+        }
+        
+        // 初始化文件管理器
+        let fileManager;
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                fileManager = new SimpleFileManager();
+                window.fileManager = fileManager;
+            });
+        } else {
+            fileManager = new SimpleFileManager();
+            window.fileManager = fileManager;
+        }
+    </script>
+</body>
+</html>

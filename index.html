@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件管理APP</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- PWA 配置 -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#2196F3">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="文件管理">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1>文件管理</h1>
+            <div class="header-actions">
+                <button id="uploadBtn" class="btn btn-primary">上传文件</button>
+                <button id="favoriteBtn" class="btn btn-secondary">收藏夹</button>
+                <input type="file" id="fileInput" multiple webkitdirectory style="display: none;">
+                <div style="font-size: 12px; color: #666; margin-top: 5px;">提示：可选择文件夹上传大量文件</div>
+            </div>
+        </header>
+
+        <div class="search-section">
+            <input type="text" id="searchInput" placeholder="搜索文件..." class="search-input">
+        </div>
+
+        <div class="filter-section">
+            <select id="filterSelect" class="filter-select">
+                <option value="all">所有文件</option>
+                <option value="pdf">PDF文件</option>
+                <option value="html">HTML文件</option>
+                <option value="image">图片文件</option>
+                <option value="zip">压缩文件</option>
+            </select>
+            <select id="sortSelect" class="filter-select">
+                <option value="newest">最新上传</option>
+                <option value="oldest">最早上传</option>
+                <option value="name_asc">名称升序</option>
+                <option value="name_desc">名称降序</option>
+            </select>
+            <button id="selectAllBtn" class="btn btn-secondary">全选</button>
+            <button id="selectNoneBtn" class="btn btn-secondary">取消全选</button>
+            <button id="batchDeleteBtn" class="btn btn-danger" style="display: none;">批量删除</button>
+            <button id="deleteAllBtn" class="btn btn-danger">删除全部</button>
+            <button id="deleteBySuffixBtn" class="btn btn-danger">按后缀删除</button>
+        </div>
+
+        <main class="file-list-container">
+            <div id="fileList" class="file-list">
+                <!-- 文件列表将通过JavaScript动态生成 -->
+            </div>
+        </main>
+    </div>
+
+    <!-- 收藏窗口 -->
+    <div id="favoriteWindow" class="modal-window" style="display: none;">
+        <div class="modal-overlay" onclick="fileManager.closeFavoriteWindow()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>收藏夹</h2>
+                <button class="btn-icon close-btn" onclick="fileManager.closeFavoriteWindow()">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="favoriteFileList" class="file-list"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="closeFavoriteBtn" class="btn btn-primary" onclick="fileManager.closeFavoriteWindow()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
